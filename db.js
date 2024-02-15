@@ -34,9 +34,19 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+const fbUserSchema = new mongoose.Schema({
+  userID: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+});
+
 // Create a model from the schema
 const User = mongoose.model("User", userSchema);
+const FBUser = mongoose.model("FBUser", fbUserSchema);
 
 module.exports = {
   User,
+  FBUser,
 };

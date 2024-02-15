@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const zod = require("zod");
 const jwt = require("jsonwebtoken");
-const { User } = require("../db");
+const { User, FBUser } = require("../db");
 const { JWT_SECRET } = require("../config");
 const bcrypt = require("bcrypt");
 
@@ -98,6 +98,47 @@ authRouter.post("/signin", async (req, res) => {
     return res.json({
       message: "success",
       token: token,
+    });
+  }
+});
+
+//fb auth
+
+const fbauthBody = zod.object({
+  userID: zod.string(),
+});
+
+authRouter.post("/fbauth", async (req, res) => {
+  const { success } = fbauthBody.safeParse(req.body);
+
+  if (!success) {
+    return res.status(411).json({
+      message: "Incorrect inputs Error",
+    });
+  }
+
+  const user = await FBUser.findOne({
+    userID: req.body.userID,
+  });
+
+  if (user) {
+    return res.status(200).json({
+      message: "success",
+    });
+  }
+
+  if (!user) {
+    const newUser = await FBUser.create({
+      userID: req.body.userID,
+    });
+
+    if (!newUser) {
+      return res.status(411).json({
+        message: "problem with creating new fbuser Error",
+      });
+    }
+    return res.status(200).json({
+      message: "success",
     });
   }
 });
