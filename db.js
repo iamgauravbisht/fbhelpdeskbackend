@@ -1,0 +1,42 @@
+const mongoose = require("mongoose");
+const { URI } = require("./config");
+
+mongoose
+  .connect(URI)
+  .then(() => {
+    console.log("connected to db");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+
+// Create a Schema for Users
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+    minLength: 3,
+    maxLength: 30,
+  },
+  password: {
+    type: String,
+    required: true,
+    minLength: 6,
+  },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 50,
+    unique: true,
+  },
+});
+
+// Create a model from the schema
+const User = mongoose.model("User", userSchema);
+
+module.exports = {
+  User,
+};
