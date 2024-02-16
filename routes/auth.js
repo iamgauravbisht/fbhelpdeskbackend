@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { User, FBUser } = require("../db");
 const { JWT_SECRET } = require("../config");
 const bcrypt = require("bcrypt");
+const { userDetails } = require("../utils/pageutils");
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
@@ -103,9 +104,9 @@ authRouter.post("/signin", async (req, res) => {
 });
 
 //fb auth
-
 const fbauthBody = zod.object({
   userID: zod.string(),
+  access_token: zod.string(),
 });
 
 authRouter.post("/fbauth", async (req, res) => {
@@ -117,19 +118,28 @@ authRouter.post("/fbauth", async (req, res) => {
     });
   }
 
+  const { pageDetails } = await userDetails(req.body);
+
   const user = await FBUser.findOne({
     userID: req.body.userID,
   });
 
   if (user) {
-    return res.status(200).json({
-      message: "success",
+    await FBUser.findOneAndUpdate(
+      { userID: req.body.userID },
+      { pageDetails: pageDetails }
+    ).then(() => {
+      console.log("updated page details for fbuser");
+      return res.status(200).json({
+        message: "success",
+      });
     });
   }
 
   if (!user) {
     const newUser = await FBUser.create({
       userID: req.body.userID,
+      pageDetails: pageDetails,
     });
 
     if (!newUser) {
@@ -142,5 +152,36 @@ authRouter.post("/fbauth", async (req, res) => {
     });
   }
 });
+
+// {
+//   "data": [
+//     {
+//       "access_token": "EAAFbWRC9eREBO6JZACJfV4ZC8Oz5Qm49w0hvoZCpmokVU12zkm5KhVTJLMZConQN15WdqwLcBINZAgCJWgTBRS9w90vJ24A3jvIHi5jEyTrLaGrUvdViZAVQ0JcmgQhjuRaNFgxupN9TAtZC53HCx4oT3LZCyL8ppGCwL9dXCwRzJimDDaZA3qo9PFN4jgK6S15zgbZCs0KEgZD",
+//       "category": "Software",
+//       "category_list": [
+//         {
+//           "id": "2211",
+//           "name": "Software"
+//         }
+//       ],
+//       "name": "HelpDesk",
+//       "id": "221671561038277",
+//       "tasks": [
+//         "ADVERTISE",
+//         "ANALYZE",
+//         "CREATE_CONTENT",
+//         "MESSAGING",
+//         "MODERATE",
+//         "MANAGE"
+//       ]
+//     }
+//   ],
+//   "paging": {
+//     "cursors": {
+//       "before": "QVFIUjFXZAW9aTVZAoRUhCTkZADZAVZAqY0RSNXV4QUg0ZAUtWbDZANU1BvVXJWbHF0emxZAc3NBRXFUOGFiZAlV1TlAtZAzZAwb3lwdEhBVkd6Y0xLc2RaWTJFZA0I0QWRn",
+//       "after": "QVFIUjFXZAW9aTVZAoRUhCTkZADZAVZAqY0RSNXV4QUg0ZAUtWbDZANU1BvVXJWbHF0emxZAc3NBRXFUOGFiZAlV1TlAtZAzZAwb3lwdEhBVkd6Y0xLc2RaWTJFZA0I0QWRn"
+//     }
+//   }
+// }
 
 module.exports = authRouter;

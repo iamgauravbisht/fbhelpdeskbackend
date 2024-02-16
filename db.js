@@ -40,6 +40,18 @@ const fbUserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  pageDetails: [
+    {
+      pageID: {
+        type: String,
+        required: true,
+      },
+      pageName: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
 
 // Create a model from the schema
