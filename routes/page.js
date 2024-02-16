@@ -40,11 +40,11 @@ pageRouter.post("/showallpages", async (req, res) => {
       message: response.message,
     });
   }
-  const { pageDetails } = response;
+  const { pageDetailsWithToken } = response;
   console.log(pageDetails);
   return res.status(200).json({
     message: "success",
-    pageDetails,
+    pageDetails: pageDetailsWithToken,
   });
 });
 
