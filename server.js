@@ -20,23 +20,7 @@ app.get("/", (req, res) => {
   res.send("Hello World");
   console.log("Hello World");
 });
-function verifyRequestSignature(req, res, buf) {
-  var signature = req.headers["x-hub-signature-256"];
 
-  if (!signature) {
-    console.warn(`Couldn't find "x-hub-signature-256" in headers.`);
-  } else {
-    var elements = signature.split("=");
-    var signatureHash = elements[1];
-    var expectedHash = crypto
-      .createHmac("sha256", appSecret)
-      .update(buf)
-      .digest("hex");
-    if (signatureHash != expectedHash) {
-      throw new Error("Couldn't validate the request signature.");
-    }
-  }
-}
 // Parse application/x-www-form-urlencoded
 app.use(
   urlencoded({
@@ -56,7 +40,7 @@ app.get("/webhook", (req, res) => {
   // Check if a token and mode is in the query string of the request
   if (mode && token) {
     // Check the mode and token sent is correct
-    if (mode === "subscribe" && token === verifyToken) {
+    if (mode === "subscribe" && token == verifyToken) {
       // Respond with the challenge token from the request
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
@@ -192,7 +176,7 @@ app.get("/messaging-webhook", (req, res) => {
   // Check if a token and mode is in the query string of the request
   if (mode && token) {
     // Check the mode and token sent is correct
-    if (mode === "subscribe" && token === verifyToken) {
+    if (mode === "subscribe" && token == verifyToken) {
       // Respond with the challenge token from the request
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
@@ -202,6 +186,24 @@ app.get("/messaging-webhook", (req, res) => {
     }
   }
 });
+
+function verifyRequestSignature(req, res, buf) {
+  var signature = req.headers["x-hub-signature-256"];
+
+  if (!signature) {
+    console.warn(`Couldn't find "x-hub-signature-256" in headers.`);
+  } else {
+    var elements = signature.split("=");
+    var signatureHash = elements[1];
+    var expectedHash = crypto
+      .createHmac("sha256", appSecret)
+      .update(buf)
+      .digest("hex");
+    if (signatureHash != expectedHash) {
+      throw new Error("Couldn't validate the request signature.");
+    }
+  }
+}
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
