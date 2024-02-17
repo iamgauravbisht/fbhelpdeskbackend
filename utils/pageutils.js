@@ -36,6 +36,9 @@ const getConversations = async ({ pageID, pageAccessToken }) => {
     `https://graph.facebook.com/${pageID}/conversations?fields=participants,messages{id,message,created_time,from,to}&access_token=${pageAccessToken}`,
     {
       method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     }
   ).then((res) => res.json());
   console.log(conversations);
