@@ -11,30 +11,25 @@ const verifyToken = process.env.VERIFY_TOKEN;
 
 const port = process.env.PORT || 5000;
 
-// const allowedOrigins = [
-//   "https://splendid-alpaca-f3e5b9.netlify.app",
-//   "https://splendid-alpaca-f3e5b9.netlify.app/dashboard",
-// ];
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-//   methods: "GET,PUT,POST",
-//   allowedHeaders: "Content-Type, Authorization",
-// }; corsOptions
+const allowedOrigins = [
+  "https://splendid-alpaca-f3e5b9.netlify.app",
+  "https://splendid-alpaca-f3e5b9.netlify.app/dashboard",
+  "https://splendid-alpaca-f3e5b9.netlify.app/dashboard/",
+];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: "GET,PUT,POST",
+  allowedHeaders: "Content-Type, Authorization ",
+};
 
-// app.use(cors());
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use("/auth", authRouter);
