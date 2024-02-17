@@ -1,5 +1,4 @@
 module.exports = {
-  JWT_SECRET: "jwt-secret",
-  URI: `mongodb+srv://money:Ewt6ZwHNsLeXvIXp@cluster0.ei5qidr.mongodb.net/fbhelpdesk`,
-  port: 3000,
+  verifyToken: "heythisismyverificationcallformessengeswebhook",
+  appSecret,
 };

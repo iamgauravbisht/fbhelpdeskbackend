@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const { User, FBUser } = require("../db");
 const bcrypt = require("bcrypt");
 const { userDetails } = require("../utils/pageutils");
-// require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

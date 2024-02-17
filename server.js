@@ -2,9 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const authRouter = require("./routes/auth");
 const pageRouter = require("./routes/page");
-const bodyParser = require("body-parser");
 const { urlencoded, json } = require("body-parser");
 require("dotenv").config();
+
+const config = require("./config");
 
 const app = express();
 
