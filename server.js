@@ -6,7 +6,6 @@ const bodyParser = require("body-parser");
 const { urlencoded, json } = require("body-parser");
 
 const app = express();
-const port = 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -198,6 +197,6 @@ app.get("/messaging-webhook", (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(3000, () => {
+  console.log(`Server is running on 3000`);
 });
