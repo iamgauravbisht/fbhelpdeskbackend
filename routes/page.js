@@ -72,7 +72,7 @@ pageRouter.post("/getconversations", async (req, res) => {
     pageAccessToken: req.body.pageAccessToken,
   });
 
-  if (!conversations.message) {
+  if (!conversations) {
     return res.status(411).json({
       message: "Error ocured while fetching user conversations details",
     });
