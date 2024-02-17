@@ -5,9 +5,9 @@ const pageRouter = require("./routes/page");
 const { urlencoded, json } = require("body-parser");
 require("dotenv").config();
 
-const config = require("./config");
-
 const app = express();
+const appSecret = process.env.APP_SECRET;
+const verifyToken = process.env.VERIFY_TOKEN;
 
 const port = process.env.PORT || 3000;
 
@@ -29,7 +29,7 @@ function verifyRequestSignature(req, res, buf) {
     var elements = signature.split("=");
     var signatureHash = elements[1];
     var expectedHash = crypto
-      .createHmac("sha256", config.appSecret)
+      .createHmac("sha256", appSecret)
       .update(buf)
       .digest("hex");
     if (signatureHash != expectedHash) {
@@ -55,7 +55,7 @@ app.get("/webhook", (req, res) => {
   // Check if a token and mode is in the query string of the request
   if (mode && token) {
     // Check the mode and token sent is correct
-    if (mode === "subscribe" && token === config.verifyToken) {
+    if (mode === "subscribe" && token === verifyToken) {
       // Respond with the challenge token from the request
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
@@ -190,7 +190,7 @@ app.get("/messaging-webhook", (req, res) => {
   // Check if a token and mode is in the query string of the request
   if (mode && token) {
     // Check the mode and token sent is correct
-    if (mode === "subscribe" && token === config.verifyToken) {
+    if (mode === "subscribe" && token === verifyToken) {
       // Respond with the challenge token from the request
       console.log("WEBHOOK_VERIFIED");
       res.status(200).send(challenge);
