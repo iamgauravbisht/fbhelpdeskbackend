@@ -33,7 +33,7 @@ const userDetails = async ({ userID, access_token }) => {
 
 const getConversations = async ({ pageID, pageAccessToken }) => {
   const conversations = await fetch(
-    `https://graph.facebook.com/${pageID}/conversations?fields=participants,messages{id,message,created_time,from,to},access_token=${pageAccessToken}`,
+    `https://graph.facebook.com/${pageID}/conversations?fields=participants,messages{id,message,created_time,from,to}&access_token=${pageAccessToken}`,
     {
       method: "GET",
       headers: {
