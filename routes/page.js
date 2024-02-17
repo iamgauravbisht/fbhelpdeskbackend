@@ -2,28 +2,14 @@ const { Router } = require("express");
 const zod = require("zod");
 const {
   userDetails,
-  getConversations,
-  operateOnConversations,
+  getMessages,
+  operateOnMessages,
+  getComments,
+  operateOnComments,
 } = require("../utils/pageutils");
+const { FBUser } = require("../db");
 
 const pageRouter = Router();
-
-// const connnectPage = zod.object({
-//   access_token: zod.string(),
-// });
-
-// pageRouter.get("/connect", async (req, res) => {
-//   const { success } = connnectPage.safeParse(req.body);
-//   if (!success) {
-//     return res.status(411).json({
-//       message: "invalid access token Error",
-//     });
-//   }
-
-//   await fetch(
-//     `https://graph.facebook.com/${userID}/accounts?access_token=${req.body.access_token}`
-//   );
-// });
 
 const showAllPages = zod.object({
   userID: zod.string(),
@@ -51,24 +37,20 @@ pageRouter.post("/showallpages", async (req, res) => {
   });
 });
 
-//pageRouter which gets the conversations of the page messenger
-//sort the all the conversations between users and create a array of conversations between two users
-// also then go inside that array and select each conversation and create a array of messages between two users with condition such that the two messages are not more than 24hrs apart if they are 24hrs apart create a new conversation array for them and then sort this array in descending order of time and send it to the frontend.
-
 const conversationsBody = zod.object({
   pageID: zod.string(),
   pageAccessToken: zod.string(),
+  userID: zod.string(),
 });
 
-pageRouter.post("/getconversations", async (req, res) => {
+pageRouter.post("/getmessages", async (req, res) => {
   const { success } = conversationsBody.safeParse(req.body);
   if (!success) {
     return res.status(411).json({
       message: "invalid inputs Error",
     });
   }
-  console.log(req.body);
-  const conversations = await getConversations({
+  const conversations = await getMessages({
     pageID: req.body.pageID,
     pageAccessToken: req.body.pageAccessToken,
   });
@@ -80,19 +62,100 @@ pageRouter.post("/getconversations", async (req, res) => {
       message: "Error ocured while fetching user conversations details",
     });
   }
-  const cleanedData = operateOnConversations(conversations);
+  const cleanedDataMesages = operateOnMessages(conversations);
   if (!cleanedData) {
     return res.status(411).json({
       message: "Error ocured while cleaning user conversations details",
     });
   }
+  await FBUser.findOneAndUpdate(
+    { userID: req.body.userID, "pageDetails.pageID": req.body.pageID },
+    { $set: { "pageDetails.$.messages": cleanedDataMesages } }
+  );
   return res.status(200).json({
     message: "success",
-    conversations: cleanedData,
+    conversations: cleanedDataMesages,
   });
 });
+pageRouter.post("/getcomments", async (req, res) => {
+  const { success } = conversationsBody.safeParse(req.body);
+  if (!success) {
+    return res.status(411).json({
+      message: "invalid inputs Error",
+    });
+  }
+  const comments = await getComments({
+    pageID: req.body.pageID,
+    pageAccessToken: req.body.pageAccessToken,
+  });
+  if (!comments) {
+    return res.status(411).json({
+      message: "Error ocured while fetching user comments details",
+    });
+  }
+  console.log("comments: ", comments);
+  const cleanedDataComments = operateOnComments(comments);
+  await FBUser.findOneAndUpdate(
+    { userID: req.body.userID, "pageDetails.pageID": req.body.pageID },
+    { $set: { "pageDetails.$.comments": cleanedDataComments } }
+  );
 
-//pageRouter which gets the comments from the page and then sort the comments in descending order of time and send it to the frontend.
+  return res.status(200).json({
+    message: "success",
+    comments: cleanedDataComments,
+  });
+});
+pageRouter.post("/getconversations", async (req, res) => {
+  const { success } = conversationsBody.safeParse(req.body);
+  if (!success) {
+    return res.status(411).json({
+      message: "invalid inputs Error",
+    });
+  }
+  const conversations = await getMessages({
+    pageID: req.body.pageID,
+    pageAccessToken: req.body.pageAccessToken,
+  });
+  if (!conversations) {
+    return res.status(411).json({
+      message: "Error ocured while fetching user conversations details",
+    });
+  }
+  const cleanedDataMesages = operateOnMessages(conversations);
+  if (!cleanedDataMesages) {
+    return res.status(411).json({
+      message: "Error ocured while cleaning user conversations details",
+    });
+  }
+  const comments = await getComments({
+    pageID: req.body.pageID,
+    pageAccessToken: req.body.pageAccessToken,
+  });
+  if (!comments) {
+    return res.status(411).json({
+      message: "Error ocured while fetching user comments details",
+    });
+  }
+  const cleanedDataComments = operateOnComments(comments);
+
+  const cleanedData = [...cleanedDataMesages, ...cleanedDataComments];
+  console.log("cleanedData: ", cleanedData);
+
+  const sortedCleanedData = cleanedData.sort(
+    (a, b) =>
+      new Date(b.messages[0].created_time) -
+      new Date(a.messages[0].created_time)
+  );
+  await FBUser.findOneAndUpdate(
+    { userID: req.body.userID, "pageDetails.pageID": req.body.pageID },
+    { $set: { "pageDetails.$.conversations": sortedCleanedData } }
+  );
+
+  return res.status(200).json({
+    message: "success",
+    conversations: sortedCleanedData,
+  });
+});
 
 //pageRouter which send a reply message to the user from the frontend
 
@@ -100,6 +163,65 @@ pageRouter.post("/getconversations", async (req, res) => {
 
 module.exports = pageRouter;
 
+//////response from the getcomments api
+// {
+//   "data": [
+//     {
+//       "message": "Hello, This is my Second Post.",
+//       "comments": {
+//         "data": [
+//           {
+//             "id": "122100645596217777_24718676151112952",
+//             "message": "writing first comment on my second post.",
+//             "from": {
+//               "name": "HelpDesk",
+//               "id": "221671561038277"
+//             },
+//             "created_time": "2024-02-16T19:27:49+0000"
+//           }
+//         ],
+//         "paging": {
+//           "cursors": {
+//             "before": "MQZDZD",
+//             "after": "MQZDZD"
+//           }
+//         }
+//       },
+//       "id": "221671561038277_122100645596217777"
+//     },
+//     {
+//       "message": "Hello, This is my FIRST Post.",
+//       "comments": {
+//         "data": [
+//           {
+//             "id": "122100645542217777_267455606374104",
+//             "message": "writing first comment on my first post.",
+//             "from": {
+//               "name": "HelpDesk",
+//               "id": "221671561038277"
+//             },
+//             "created_time": "2024-02-16T19:28:03+0000"
+//           }
+//         ],
+//         "paging": {
+//           "cursors": {
+//             "before": "MQZDZD",
+//             "after": "MQZDZD"
+//           }
+//         }
+//       },
+//       "id": "221671561038277_122100645542217777"
+//     }
+//   ],
+//   "paging": {
+//     "cursors": {
+//       "before": "QVFIUlV6dlc3bUdPNTlScGs0eFVKOGNiNVlBUlZAEb3NYT09kQVNrQjNNaTlVbzA2RnV3akdfTUpBRk8ySXF2TFYyanI3cmNYb25xQy1IUldHTC1uNXZA3WVd5bFRVSWtnVmJvRU5HNWdwZA2VKSjhfTmJpV0FXeVQxM3VIN3A5dXVpX09hczVOdkptaEQxNmVadTluSm10X3E3b1lmS0tudWVIVmlJUWxwNzdfQzl3MnpmckdYdE5OOXVOSDAzbm5RcEtuLVd0a2xTQlJqeTJVb2E2UlhsV0VTTmJMaWt3NC1aZA0tGYXJKc1BtMEszUkpKR1FzYXQyRW92NmpaVzZA6TGU2SmVXa2VFOXMxZAVpoMjU2SVU0em54WW5tczRScEdtQjdaV05qcXU1bGgzai1veTF4SkJmanFPenhLaWY0ZAXN1UFA2MDU2ZAEI5VVdhMHY2cTBLcWZAlTzU1RXk0cVAwZA0RBRldCRXREU0psUnhfd1lHaThzTFQzUkZA2NEpHeW93aFVnZA1JtUkZAQbG5DYlczQzJjMVNLZAHpVUElnTC1WSnA0amRRSU9sX1hqb1l6X1lHZAUFqTkFUM2FsdC10WXBLZAVhYTG1mVEs5WjVYZAzE5SllrV1A1clJkVEZAWZAUZAleDVoM0JnNjFyajh6V2hRa0w4",
+//       "after": "QVFIUmNySmFNdFVKR0V5YVd1NW1kSU8yZAnNfYnRwMGVCSVdiMjlOWDNPYm11Rl9jaHpFZATltakFDeXBReTJQazJzLVROWU9qWU92QWY3WmtxTl9QOFMxWXdRUlRSRVJJd1RVS0h6SHF6Qlg0QWFJVFNTSXlSOHA3RjBRRDBKQXVPVGxrWHVySDFaRnhES19tZAGxORFM1OENDelh3MTgxVldKbDVYa013dWRmX3lrMVhQREN3bDZA1TWUzaUphOHRXRFI4aWp2U09kSUVYRDdFbW9ScWNyMzVlTFhDMk11Um41UkhxWHExWldnZAmVJREMxXzJfalMzLWpUQ25QalcwZAUhmaU5rSGtHZAVZAxS1U1aWtfQnViaDdneS00XzV1TFZAZAMjV5ZAFRuNHNFQmpjdWtPT1FsRGNtNHE5M3JsSVN3ZAUNjVG5HNTVoc0oxTWtxWnp0X0wtZAWhHRDFTQWVtSEU4akw4dktjdTRtY3E1blViUlBnU1drY3FmTHdCVDZAUMEE5ZADFoREdWMjBfeXZAMQzYtSVFYSEN5c2FuM012ekFHRXFaamcyOFFzeEZAzSHNhRUw2ODdYQVB0RS1NNEVQRk1NQWxnWExTUFBzSmhfdlpBMGRvVHZAJYXVaZA3E3eVFZANXV1c3NPMFNXeEhVUWxqcU1r"
+//     }
+//   }
+// }
+
+//////response from the getconversations api
 // {
 // "data": [
 //   {

@@ -53,6 +53,177 @@ const fbUserSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      conversations: [
+        {
+          name: {
+            type: String,
+          },
+          participants: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              name: {
+                type: String,
+                required: true,
+              },
+            },
+          ],
+          messages: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              message: {
+                type: String,
+                required: true,
+              },
+              created_time: {
+                type: String,
+                required: true,
+              },
+              from: {
+                id: {
+                  type: String,
+                  required: true,
+                },
+                name: {
+                  type: String,
+                  required: true,
+                },
+              },
+              to: {
+                id: {
+                  type: String,
+                  required: true,
+                },
+                name: {
+                  type: String,
+                  required: true,
+                },
+              },
+            },
+          ],
+          id: {
+            type: String,
+            required: true,
+          },
+          type: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      comments: [
+        {
+          name: {
+            type: String,
+            required: true,
+          },
+          messages: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              message: {
+                type: String,
+                required: true,
+              },
+              from: {
+                id: {
+                  type: String,
+                  required: true,
+                },
+                name: {
+                  type: String,
+                  required: true,
+                },
+              },
+              created_time: {
+                type: String,
+                required: true,
+              },
+            },
+          ],
+          id: {
+            type: String,
+            required: true,
+          },
+          participants: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              name: {
+                type: String,
+                required: true,
+              },
+            },
+          ],
+          type: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+      posts: [
+        {
+          name: {
+            type: String,
+            required: true,
+          },
+          messages: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              message: {
+                type: String,
+                required: true,
+              },
+              from: {
+                id: {
+                  type: String,
+                  required: true,
+                },
+                name: {
+                  type: String,
+                  required: true,
+                },
+              },
+              created_time: {
+                type: String,
+                required: true,
+              },
+            },
+          ],
+          id: {
+            type: String,
+            required: true,
+          },
+          participants: [
+            {
+              id: {
+                type: String,
+                required: true,
+              },
+              name: {
+                type: String,
+                required: true,
+              },
+            },
+          ],
+          type: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
     },
   ],
 });

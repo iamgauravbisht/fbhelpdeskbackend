@@ -128,21 +128,26 @@ authRouter.post("/fbauth", async (req, res) => {
   });
 
   if (user) {
-    await FBUser.findOneAndUpdate(
+    await FBUser.updateOne(
       { userID: req.body.userID },
-      { pageDetails: pageDetails }
-    ).then(() => {
-      console.log("updated page details for fbuser");
-      return res.status(200).json({
-        message: "success",
-      });
-    });
+      { $push: { pageDetails: { $each: pageDetails } } }
+    )
+      .then(() =>
+        res.status(200).json({
+          message: "success",
+        })
+      )
+      .catch((err) =>
+        res.status(411).json({
+          message: "problem with updating fbuser Error",
+        })
+      );
   }
 
   if (!user) {
     const newUser = await FBUser.create({
       userID: req.body.userID,
-      pageDetails: pageDetails,
+      pageDetails: [...pageDetails],
     });
 
     if (!newUser) {
