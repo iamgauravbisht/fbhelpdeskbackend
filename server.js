@@ -11,7 +11,10 @@ const verifyToken = process.env.VERIFY_TOKEN;
 
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = ["https://splendid-alpaca-f3e5b9.netlify.app"];
+const allowedOrigins = [
+  "https://splendid-alpaca-f3e5b9.netlify.app",
+  "https://splendid-alpaca-f3e5b9.netlify.app/*",
+];
 const corsOptions = {
   origin: function (origin, callback) {
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
