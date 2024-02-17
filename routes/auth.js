@@ -2,9 +2,11 @@ const { Router } = require("express");
 const zod = require("zod");
 const jwt = require("jsonwebtoken");
 const { User, FBUser } = require("../db");
-const { JWT_SECRET } = require("../config");
 const bcrypt = require("bcrypt");
 const { userDetails } = require("../utils/pageutils");
+// require("dotenv").config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const hashPassword = async (password) => {
   const salt = await bcrypt.genSalt(10);
