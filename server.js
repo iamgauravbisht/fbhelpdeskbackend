@@ -11,7 +11,10 @@ const verifyToken = process.env.VERIFY_TOKEN;
 
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+// allow this origin to access the server   https://splendid-alpaca-f3e5b9.netlify.app
+app.use(cors({ origin: "https://splendid-alpaca-f3e5b9.netlify.app" }));
+
+// app.use(cors());
 app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/page", pageRouter);
