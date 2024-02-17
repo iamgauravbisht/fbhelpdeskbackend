@@ -13,7 +13,7 @@ const port = process.env.PORT || 5000;
 
 const allowedOrigins = [
   "https://splendid-alpaca-f3e5b9.netlify.app",
-  "https://splendid-alpaca-f3e5b9.netlify.app/*",
+  "https://splendid-alpaca-f3e5b9.netlify.app/dashboard",
 ];
 const corsOptions = {
   origin: function (origin, callback) {
