@@ -30,18 +30,13 @@ const userDetails = async ({ userID, access_token }) => {
   }
   return { pageDetails, pageDetailsWithToken };
 };
-
 const getConversations = async ({ pageID, pageAccessToken }) => {
   const conversations = await fetch(
     `https://graph.facebook.com/${pageID}/conversations?fields=participants,messages{id,message,created_time,from,to}&access_token=${pageAccessToken}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
     }
   ).then((res) => res.json());
-  console.log(conversations);
   return conversations;
 };
 

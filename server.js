@@ -3,33 +3,16 @@ const cors = require("cors");
 const authRouter = require("./routes/auth");
 const pageRouter = require("./routes/page");
 const { urlencoded, json } = require("body-parser");
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
 
 const app = express();
+
 const appSecret = process.env.APP_SECRET;
 const verifyToken = process.env.VERIFY_TOKEN;
-
 const port = process.env.PORT || 5000;
 
-const allowedOrigins = [
-  "https://splendid-alpaca-f3e5b9.netlify.app",
-  "https://splendid-alpaca-f3e5b9.netlify.app/dashboard",
-  "https://splendid-alpaca-f3e5b9.netlify.app/dashboard/",
-];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: "GET,PUT,POST",
-  allowedHeaders: "Content-Type, Authorization ",
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 app.use(express.json());
 app.use("/auth", authRouter);

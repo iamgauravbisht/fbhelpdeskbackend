@@ -67,6 +67,7 @@ pageRouter.post("/getconversations", async (req, res) => {
       message: "invalid inputs Error",
     });
   }
+  console.log(req.body);
   const conversations = await getConversations({
     pageID: req.body.pageID,
     pageAccessToken: req.body.pageAccessToken,
