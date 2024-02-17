@@ -11,10 +11,22 @@ const verifyToken = process.env.VERIFY_TOKEN;
 
 const port = process.env.PORT || 5000;
 
-// allow this origin to access the server   https://splendid-alpaca-f3e5b9.netlify.app
-app.use(cors({ origin: "https://splendid-alpaca-f3e5b9.netlify.app" }));
+const allowedOrigins = ["https://splendid-alpaca-f3e5b9.netlify.app"];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: "Content-Type, Authorization",
+};
 
-// app.use(cors());
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/page", pageRouter);
