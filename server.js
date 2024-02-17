@@ -14,7 +14,7 @@ app.use("/auth", authRouter);
 app.use("/page", pageRouter);
 
 app.get("/", (req, res) => {
-  res.write("hello world").send("Hello World");
+  res.send("Hello World");
   console.log("Hello World");
 });
 function verifyRequestSignature(req, res, buf) {
