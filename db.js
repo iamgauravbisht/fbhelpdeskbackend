@@ -170,7 +170,7 @@ const fbUserSchema = new mongoose.Schema({
           },
         },
       ],
-      posts: [
+      messages: [
         {
           name: {
             type: String,

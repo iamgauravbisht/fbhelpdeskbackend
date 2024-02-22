@@ -1,44 +1,38 @@
-const userDetails = async ({ userID, access_token }) => {
-  const user = await fetch(
-    `https://graph.facebook.com/${userID}/accounts?access_token=${access_token}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+//  find the index of messages that are 24hrs apart from each other
+function findIndexOfMessagesWRTTime(messages, timeInHrs) {
+  const indices = [];
+  messages.forEach((message, index) => {
+    if (index === messages.length - 1) return;
+    if (
+      new Date(message.created_time) -
+        new Date(messages[index + 1].created_time) >
+      timeInHrs * 60 * 60 * 1000
+    ) {
+      indices.push(index);
     }
-  ).then((res) => res.json());
-  console.log(userDetails);
-
-  const pageDetailsWithToken = user.data.map((page) => {
-    return {
-      pageID: page.id,
-      pageName: page.name,
-      pageAccessToken: page.access_token,
-    };
   });
+  indices.push(messages.length - 1);
+  console.log("indices", indices);
+  return indices;
+}
 
-  const pageDetails = pageDetailsWithToken.map((page) => {
-    return {
-      pageID: page.pageID,
-      pageName: page.pageName,
-    };
-  });
-
-  if (!userDetails) {
-    return { message: "Error ocured while fetching user pages details" };
-  }
-  return { pageDetails, pageDetailsWithToken };
-};
-const getMessages = async ({ pageID, pageAccessToken }) => {
-  const conversations = await fetch(
-    `https://graph.facebook.com/${pageID}/conversations?fields=participants,messages{id,message,created_time,from,to}&access_token=${pageAccessToken}`,
-    {
-      method: "GET",
-    }
-  ).then((res) => res.json());
-  return conversations;
-};
+//divide the messages into multiple array and put them in new conversation array
+function divideAndCreateMessagesConvo(conversation, messageIndex) {
+  const newConversation = [];
+  let j = 0;
+  messageIndex
+    .sort((a, b) => a - b)
+    .forEach((index) => {
+      newConversation.push({
+        participants: conversation.participants,
+        id: conversation.id,
+        type: conversation.type,
+        messages: conversation.messages.slice(j, index + 1).reverse(),
+      });
+      j = index + 1;
+    });
+  return newConversation;
+}
 
 const operateOnMessages = (conversations) => {
   const cleanedData = conversations.data.map((conversation) => ({
@@ -56,78 +50,28 @@ const operateOnMessages = (conversations) => {
     id: conversation.id,
     type: "FACEBOOK DM",
   }));
+  console.log("cleanedData", cleanedData);
 
-  const sortedConversationArray = cleanedData
-    .map((conversation) => {
-      conversation.messages.sort(
-        (a, b) => new Date(a.created_time) - new Date(b.created_time)
+  if (cleanedData && cleanedData.length > 0) {
+    const newConvo = [];
+    cleanedData.forEach((conversation) => {
+      const messageIndex = findIndexOfMessagesWRTTime(
+        conversation.messages,
+        24
       );
-      return { ...conversation, messages: conversation.messages };
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.messages[0].created_time) -
-        new Date(b.messages[0].created_time)
+      newConvo.push(
+        ...divideAndCreateMessagesConvo(conversation, messageIndex)
+      );
+    });
+    return newConvo;
+  } else {
+    // Handle case where cleanedData.messages is empty or undefined
+    console.log(
+      "error in operateOnMessages: cleanedData.messages is empty or undefined."
     );
-
-  const newConversationArray = sortedConversationArray
-    .map((conversation) => {
-      const newConversation = [];
-      let currentMessages = [];
-
-      for (let i = 0; i < conversation.messages.length; i++) {
-        if (
-          i === 0 ||
-          Math.abs(
-            new Date(currentMessages[0].created_time) -
-              new Date(conversation.messages[i].created_time)
-          ) >
-            24 * 60 * 60 * 1000
-        ) {
-          if (currentMessages.length > 0) {
-            newConversation.push({
-              participants: conversation.participants,
-              messages: currentMessages,
-              id: conversation.id,
-            });
-          }
-          currentMessages = [conversation.messages[i]];
-        } else {
-          currentMessages.push(conversation.messages[i]);
-        }
-      }
-
-      if (currentMessages.length > 0) {
-        newConversation.push({
-          participants: conversation.participants,
-          messages: currentMessages,
-          id: conversation.id,
-          type: conversation.type,
-        });
-      }
-
-      return newConversation.map((newConvItem) => ({
-        ...newConvItem,
-        messages: newConvItem.messages.sort(
-          (a, b) => new Date(a.created_time) - new Date(b.created_time)
-        ),
-      }));
-    })
-    .flat();
-
-  return newConversationArray;
+    return [];
+  }
 };
-
-const getComments = async ({ pageID, pageAccessToken }) => {
-  const comments = await fetch(
-    `https://graph.facebook.com/${pageID}/feed?fields=message,comments{id,message,from,created_time}&access_token=${pageAccessToken}`,
-    {
-      method: "GET",
-    }
-  ).then((res) => res.json());
-  return comments;
-};
-
 const operateOnComments = (comments) => {
   const cleanedData = comments.data.map((item) => ({
     name: item.message,
@@ -151,118 +95,45 @@ const operateOnComments = (comments) => {
   return sortedData;
 };
 
-// const operateOnComments = (data) => {
-//   const cleanedData = data.map((item) => ({
-//     message: item.message,
-//     comments: item.comments.data.map((comment) => ({
-//       id: comment.id,
-//       message: comment.message,
-//       from: comment.from,
-//       created_time: comment.created_time,
-//     })),
-//     id: item.id,
-//     type: "FACEBOOK POST",
-//   }));
-
-//   const sortedData = cleanedData.sort(
-//     (a, b) =>
-//       new Date(a.comments[0].created_time) -
-//       new Date(b.comments[0].created_time)
-//   );
-
-//   const updatedData = sortedData.map((item) => ({
-//     ...item,
-//     comments: item.comments.map((comment) => ({
-//       ...comment,
-//       name: item.message, // Renaming 'message' attribute to 'name' for comments
-//     })),
-//   }));
-
-//   return updatedData;
-// };
-
-module.exports = {
-  userDetails,
-  getMessages,
-  operateOnMessages,
-  getComments,
-  operateOnComments,
+const operateOnUpdatedMessages = ({ messages, participants, id, type }) => {
+  console.log("messages :", messages);
+  const cleanedData = [
+    {
+      participants: participants,
+      messages: messages.data.map((message) => ({
+        id: message.id,
+        message: message.message,
+        created_time: message.created_time,
+        from: message.from,
+        to: message.to,
+      })),
+      id: id,
+      type: type,
+    },
+  ];
+  if (cleanedData && cleanedData.length > 0) {
+    const newConvo = [];
+    cleanedData.forEach((conversation) => {
+      const messageIndex = findIndexOfMessagesWRTTime(
+        conversation.messages,
+        24
+      );
+      newConvo.push(
+        ...divideAndCreateMessagesConvo(conversation, messageIndex)
+      );
+    });
+    return newConvo;
+  } else {
+    // Handle case where cleanedData.messages is empty or undefined
+    console.log(
+      "error in operateOnUpdatedMessages: cleanedData.messages is empty or undefined."
+    );
+    return [];
+  }
 };
 
-// const operateOnConversations = (conversations) => {
-//   const cleanedData = conversations.data.map((conversation) => ({
-//     participants: conversation.participants.data.map((participant) => ({
-//       id: participant.id,
-//       name: participant.name,
-//     })),
-//     messages: conversation.messages.data.map((message) => ({
-//       id: message.id,
-//       message: message.message,
-//       created_time: message.created_time,
-//       from: message.from,
-//       to: message.to,
-//     })),
-//     id: conversation.id,
-//     type: "FACEBOOK DM",
-//   }));
-
-//   const sortedConversationArray = cleanedData
-//     .map((conversation) => {
-//       conversation.messages.sort(
-//         (a, b) => new Date(b.created_time) - new Date(a.created_time)
-//       );
-//       return { ...conversation, messages: conversation.messages };
-//     })
-//     .sort(
-//       (a, b) =>
-//         new Date(b.messages[0].created_time) -
-//         new Date(a.messages[0].created_time)
-//     );
-
-//   const newConversationArray = sortedConversationArray
-//     .map((conversation) => {
-//       const newConversation = [];
-//       let currentMessages = [];
-
-//       for (let i = 0; i < conversation.messages.length; i++) {
-//         if (
-//           i === 0 ||
-//           Math.abs(
-//             new Date(currentMessages[0].created_time) -
-//               new Date(conversation.messages[i].created_time)
-//           ) >
-//             24 * 60 * 60 * 1000
-//         ) {
-//           if (currentMessages.length > 0) {
-//             newConversation.push({
-//               participants: conversation.participants,
-//               messages: currentMessages,
-//               id: conversation.id,
-//             });
-//           }
-//           currentMessages = [conversation.messages[i]];
-//         } else {
-//           currentMessages.push(conversation.messages[i]);
-//         }
-//       }
-
-//       if (currentMessages.length > 0) {
-//         newConversation.push({
-//           participants: conversation.participants,
-//           messages: currentMessages,
-//           id: conversation.id,
-//           type: conversation.type,
-//         });
-//       }
-
-//       return newConversation.map((newConvItem) => ({
-//         ...newConvItem,
-//         messages: newConvItem.messages.sort(
-//           (a, b) => new Date(b.created_time) - new Date(a.created_time)
-//         ),
-//       }));
-//     })
-//     .flat();
-
-//   return newConversationArray;
-// };
+module.exports = {
+  operateOnComments,
+  operateOnMessages,
+  operateOnUpdatedMessages,
+};

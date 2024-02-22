@@ -3,7 +3,7 @@ const zod = require("zod");
 const jwt = require("jsonwebtoken");
 const { User, FBUser } = require("../db");
 const bcrypt = require("bcrypt");
-const { userDetails } = require("../utils/pageutils");
+const { userDetails } = require("../utils/pageRouteCall");
 const dotenv = require("dotenv");
 dotenv.config();
 
